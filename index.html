@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DarkNet CTF | XSS Challenge</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Courier New', monospace;
+        }
+        
+        body {
+            background-color: #000;
+            color: #0f0;
+            background-image: 
+                radial-gradient(rgba(0, 150, 0, 0.15) 1px, transparent 1px),
+                radial-gradient(rgba(0, 150, 0, 0.15) 1px, transparent 1px);
+            background-size: 30px 30px;
+            background-position: 0 0, 15px 15px;
+            overflow-x: hidden;
+            padding: 20px;
+            position: relative;
+        }
+        
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(transparent 90%, rgba(0, 30, 0, 0.8) 90%);
+            background-size: 100% 3px;
+            z-index: 1000;
+            pointer-events: none;
+            animation: scan 8s linear infinite;
+        }
+        
+        @keyframes scan {
+            0% { background-position: 0 100%; }
+            100% { background-position: 0 0; }
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            border-bottom: 1px solid #0f0;
+            margin-bottom: 30px;
+            background: rgba(10, 15, 10, 0.8);
+            border-radius: 5px;
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.3);
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo i {
+            font-size: 28px;
+            margin-right: 10px;
+            color: #0f0;
+        }
+        
+        .logo h1 {
+            font-size: 24px;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px #0f0;
+        }
+        
+        .nav a {
+            color: #0f0;
+            text-decoration: none;
+            margin: 0 15px;
+            padding: 8px 15px;
+            border: 1px solid #0f0;
+            border-radius: 3px;
+            transition: all 0.3s;
+        }
+        
+        .nav a:hover {
+            background: rgba(0, 255, 0, 0.2);
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
+        }
+        
+        .posts-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .post {
+            background: rgba(10, 15, 10, 0.8);
+            border: 1px solid #0f0;
+            border-radius: 5px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.2);
+        }
+        
+        .post-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .profile-pic {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 2px solid #0f0;
+            object-fit: cover;
+            margin-right: 15px;
+        }
+        
+        .user-info h3 {
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+        
+        .user-info p {
+            font-size: 12px;
+            color: #0a0;
+        }
+        
+        .post-content {
+            margin-bottom: 15px;
+        }
+        
+        .post-content img {
+            width: 100%;
+            border: 1px solid #0f0;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        
+        .post-actions {
+            display: flex;
+            border-top: 1px solid #0a0;
+            border-bottom: 1px solid #0a0;
+            padding: 10px 0;
+            margin: 10px 0;
+        }
+        
+        .action-btn {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: #0f0;
+            padding: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 3px;
+        }
+        
+        .action-btn i {
+            margin-right: 8px;
+        }
+        
+        .action-btn:hover {
+            background: rgba(0, 255, 0, 0.1);
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+        }
+        
+        .post-stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            color: #0a0;
+            margin: 10px 0;
+        }
+        
+        .pin-section {
+            background: rgba(0, 20, 0, 0.9);
+            padding: 20px;
+            border: 1px solid #0f0;
+            border-radius: 5px;
+            margin: 15px 0;
+            text-align: center;
+        }
+        
+        .pin-section h3 {
+            margin-bottom: 15px;
+        }
+        
+        .pin-input {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .pin-input input {
+            width: 50px;
+            height: 50px;
+            text-align: center;
+            font-size: 24px;
+            background: #000;
+            color: #0f0;
+            border: 1px solid #0f0;
+            border-radius: 3px;
+        }
+        
+        .pin-btn {
+            background: rgba(0, 30, 0, 0.8);
+            color: #0f0;
+            border: 1px solid #0f0;
+            padding: 10px 25px;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .pin-btn:hover {
+            background: rgba(0, 255, 0, 0.2);
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
+        }
+        
+        .comments-section {
+            margin-top: 20px;
+        }
+        
+        .comments-section h4 {
+            margin-bottom: 10px;
+            border-bottom: 1px solid #0a0;
+            padding-bottom: 5px;
+        }
+        
+        .comment-form {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        
+        .comment-input {
+            flex: 1;
+            padding: 10px;
+            background: #000;
+            color: #0f0;
+            border: 1px solid #0f0;
+            border-radius: 3px 0 0 3px;
+        }
+        
+        .comment-submit {
+            background: rgba(0, 30, 0, 0.8);
+            color: #0f0;
+            border: 1px solid #0f0;
+            border-left: none;
+            padding: 0 20px;
+            border-radius: 0 3px 3px 0;
+            cursor: pointer;
+        }
+        
+        .comments-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .comment {
+            background: rgba(0, 15, 0, 0.6);
+            border: 1px solid #0a0;
+            border-radius: 5px;
+            padding: 10px;
+            margin-bottom: 10px;
+            display: flex;
+        }
+        
+        .comment-pic {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            border: 1px solid #0f0;
+            margin-right: 10px;
+            object-fit: cover;
+        }
+        
+        .comment-content {
+            flex: 1;
+        }
+        
+        .comment-user {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .terminal {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 300px;
+            background: rgba(0, 20, 0, 0.9);
+            border: 1px solid #0f0;
+            border-radius: 5px;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+        }
+        
+        .terminal-header {
+            background: rgba(0, 30, 0, 0.8);
+            padding: 8px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #0a0;
+        }
+        
+        .terminal-title {
+            font-size: 14px;
+        }
+        
+        .terminal-body {
+            padding: 15px;
+            height: 150px;
+            overflow-y: auto;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+        
+        .terminal-line {
+            margin-bottom: 5px;
+            color: #0a0;
+        }
+        
+        .terminal-line:last-child::after {
+            content: "_";
+            animation: blink 1s infinite;
+        }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+        
+        .hidden-content {
+            display: none;
+        }
+        
+        .glitch {
+            position: relative;
+            animation: glitch 5s infinite;
+        }
+        
+        @keyframes glitch {
+            0% { text-shadow: 0 0 rgba(0,255,127,0.5); }
+            2% { text-shadow: -2px 0 rgba(255,0,0,0.5), 2px 0 rgba(0,0,255,0.5); }
+            3% { text-shadow: 0 0 rgba(0,255,127,0.5); }
+            97% { text-shadow: 0 0 rgba(0,255,127,0.5); }
+            98% { text-shadow: -3px 0 rgba(255,0,0,0.5), 3px 0 rgba(0,0,255,0.5); }
+            99% { text-shadow: 0 0 rgba(0,255,127,0.5); }
+        }
+        
+        .ctf-info {
+            background: rgba(0, 30, 0, 0.8);
+            border: 1px solid #0f0;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.3);
+        }
+        
+        .ctf-info h2 {
+            margin-bottom: 10px;
+            color: #0f0;
+        }
+        
+        .ctf-info ul {
+            padding-left: 20px;
+        }
+        
+        .ctf-info li {
+            margin-bottom: 8px;
+            color: #0a0;
+        }
+        
+        .ctf-info .code {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        
+        .ctf-info .important {
+            color: #ff0;
+            font-weight: bold;
+        }
+        
+        .ctf-info .solution {
+            color: #0ff;
+            font-weight: bold;
+        }
+        
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            50% { transform: translateX(10px); }
+            75% { transform: translateX(-10px); }
+            100% { transform: translateX(0); }
+        }
+        
+        .hint {
+            background: rgba(30, 30, 0, 0.7);
+            border: 1px solid #ff0;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 15px 0;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 255, 0, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 255, 0, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 255, 0, 0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">
+            <i class="fas fa-terminal"></i>
+            <h1 class="glitch">DarkNet CTF</h1>
+        </div>
+        <div class="nav">
+            <a href="#"><i class="fas fa-home"></i> Home</a>
+            <a href="#"><i class="fas fa-user-secret"></i> Profile</a>
+            <a href="#"><i class="fas fa-flag"></i> Challenges</a>
+        </div>
+    </div>
+    
+    <div class="posts-container">
+        <!-- Post 1 -->
+        <div class="post">
+            <div class="post-header">
+                <img src="https://i.pravatar.cc/50?img=5" class="profile-pic">
+                <div class="user-info">
+                    <h3>Zero_Cool</h3>
+                    <p>Posted 2 hours ago</p>
+                </div>
+            </div>
+            <div class="post-content">
+                <p>Just bypassed the Gibson firewall. It was easier than I expected...</p>
+                <img src="https://images.unsplash.com/photo-1550751827-4bd374c3f58b?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" alt="Hacking terminal">
+            </div>
+            <div class="post-actions">
+                <button class="action-btn"><i class="fas fa-heart"></i> Like</button>
+                <button class="action-btn"><i class="fas fa-comment"></i> Comment</button>
+                <button class="action-btn"><i class="fas fa-share-alt"></i> Share</button>
+            </div>
+            <div class="post-stats">
+                <span>127 likes</span>
+                <span>23 comments</span>
+            </div>
+            <div class="comments-section">
+                <h4>Comments:</h4>
+                <div class="comment-form">
+                    <input type="text" class="comment-input" placeholder="Add a comment...">
+                    <button class="comment-submit">Post</button>
+                </div>
+                <div class="comments-list">
+                    <div class="comment">
+                        <img src="https://i.pravatar.cc/50?img=8" class="comment-pic">
+                        <div class="comment-content">
+                            <div class="comment-user">Crash_Override</div>
+                            <div class="comment-text">Nice work! The Gibson has been vulnerable for months.</div>
+                        </div>
+                    </div>
+                    <div class="comment">
+                        <img src="https://i.pravatar.cc/50?img=12" class="comment-pic">
+                        <div class="comment-content">
+                            <div class="comment-user">Acid_Burn</div>
+                            <div class="comment-text">Let me know if you need help with the next layer.</div>
+                        </div>
+                    </div>
+                    <div class="comment">
+                        <img src="https://i.pravatar.cc/50?img=15" class="comment-pic">
+                        <div class="comment-content">
+                            <div class="comment-user">The_Plague</div>
+                            <div class="comment-text">Remember to sanitize user inputs in your next project!</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Post 2 with PIN protection -->
+        <div class="post">
+            <div class="post-header">
+                <img src="https://i.pravatar.cc/50?img=7" class="profile-pic">
+                <div class="user-info">
+                    <h3>PhantomPhreak</h3>
+                    <p>Posted 5 hours ago</p>
+                </div>
+            </div>
+            <div class="post-content">
+                <p>Access restricted content with the correct PIN:</p>
+                <div class="pin-section">
+                    <h3>SECURE ACCESS PORTAL</h3>
+                    <p>Enter 4-digit PIN to decrypt content:</p>
+                    <div class="pin-input">
+                        <input type="password" maxlength="1" class="pin-digit">
+                        <input type="password" maxlength="1" class="pin-digit">
+                        <input type="password" maxlength="1" class="pin-digit">
+                        <input type="password" maxlength="1" class="pin-digit">
+                    </div>
+                    <button class="pin-btn">DECRYPT</button>
+                    <div id="pin-error" style="color: #f00; margin-top: 10px; display: none;">
+                        <i class="fas fa-exclamation-circle"></i> ACCESS DENIED
+                    </div>
+                </div>
+                <div id="protected-content" class="hidden-content">
+                    <img src="https://images.unsplash.com/photo-1563089145-599997674d42?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" alt="Secret content">
+                    <p>CONFIDENTIAL: Project Lazarus details. Do not share outside the group.</p>
+                    <p class="important" style="font-size: 24px; text-align: center; margin-top: 20px;">
+                        RGFya19DVEZ7SVRfSVNfU0lNUExFX0xFVkVMfQ==
+                    </p>
+                </div>
+            </div>
+            <div class="post-actions">
+                <button class="action-btn"><i class="fas fa-heart"></i> Like</button>
+                <button class="action-btn"><i class="fas fa-comment"></i> Comment</button>
+                <button class="action-btn"><i class="fas fa-share-alt"></i> Share</button>
+            </div>
+            <div class="post-stats">
+                <span>84 likes</span>
+                <span>15 comments</span>
+            </div>
+            <div class="comments-section">
+                <h4>Comments:</h4>
+                <div class="comment-form">
+                    <input type="text" class="comment-input" placeholder="Add a comment...">
+                    <button class="comment-submit">Post</button>
+                </div>
+                <div class="comments-list">
+                    <div class="comment">
+                        <img src="https://i.pravatar.cc/50?img=3" class="comment-pic">
+                        <div class="comment-content">
+                            <div class="comment-user">Cereal_Killer</div>
+                            <div class="comment-text">What's the PIN? I forgot...</div>
+                        </div>
+                    </div>
+                    <div class="comment">
+                        <img src="https://i.pravatar.cc/50?img=9" class="comment-pic">
+                        <div class="comment-content">
+                            <div class="comment-user">Lord_Nikon</div>
+                            <div class="comment-text">Check your DMs for the code</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="terminal">
+        <div class="terminal-header">
+            <div class="terminal-title">SYSTEM MONITOR</div>
+            <div><i class="fas fa-circle red"></i> <i class="fas fa-circle yellow"></i> <i class="fas fa-circle green"></i></div>
+        </div>
+        <div class="terminal-body">
+            <div class="terminal-line">> Initializing DarkNet v3.1.4</div>
+            <div class="terminal-line">> Establishing secure connection... [OK]</div>
+            <div class="terminal-line">> Loading CTF challenge... [ACTIVE]</div>
+            <div class="terminal-line">> Monitoring network activity...</div>
+            <div class="terminal-line">> 12 active users in main channel</div>
+            <div class="terminal-line">> Firewall status: ACTIVE</div>
+            <div class="terminal-line">> Intrusion detection: NO THREATS</div>
+            <div class="terminal-line">> Bandwidth: 87.3 MB/s</div>
+            <div class="terminal-line">> Secret PIN: ********</div>
+        </div>
+    </div>
+    
+    <script src="XSSS.js" defer></script>
+</body>
+</html>
